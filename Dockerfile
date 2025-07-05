@@ -1,6 +1,6 @@
 FROM node:18-slim
 
-# Install Chrome dependencies
+# Install dependencies for Chrome & Puppeteer
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -19,20 +19,26 @@ RUN apt-get update && apt-get install -y \
     libxcomposite1 \
     libxdamage1 \
     libxrandr2 \
+    libxss1 \
+    libxtst6 \
+    libcurl4 \
+    libvulkan1 \
     xdg-utils \
-    && rm -rf /var/lib/apt/lists/*
+    --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
-# Install Chrome
-RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
-    apt install -y ./google-chrome-stable_current_amd64.deb && \
-    rm google-chrome-stable_current_amd64.deb
+# Install Google Chrome
+RUN wget -O chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
+    apt-get update && apt-get install -y ./chrome.deb && \
+    rm chrome.deb
 
 WORKDIR /app
 
-# Only copying package.json (lock file skip if missing)
+# Install Node dependencies
 COPY package.json ./
 RUN npm install
 
+# Copy project files
 COPY . .
 
+# Puppeteer Launch with executablePath
 CMD ["node", "index.js"]

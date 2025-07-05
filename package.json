@@ -1,7 +1,7 @@
 {
   "name": "hlgaming-puppeteer-api",
   "version": "1.0.0",
-  "description": "Puppeteer Automation for HL Gaming API",
+  "description": "Puppeteer Automation for HL Gaming API (Koyeb Compatible)",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
@@ -9,6 +9,7 @@
   "dependencies": {
     "axios": "^1.6.7",
     "express": "^4.19.2",
-    "puppeteer": "^22.5.0"
+    "puppeteer-core": "^22.5.0",
+    "chrome-aws-lambda": "^10.1.0"
   }
 }

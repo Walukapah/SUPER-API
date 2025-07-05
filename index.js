@@ -1,30 +1,32 @@
 const express = require("express");
 const puppeteer = require("puppeteer-core");
-const chromium = require("chrome-aws-lambda");
 const axios = require("axios");
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
 app.get("/", (req, res) => {
-  res.send("Puppeteer API Running on Koyeb");
+  res.send("✅ Puppeteer API Running on Koyeb");
 });
 
 app.get("/account-info", async (req, res) => {
   try {
     const browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: process.env.CHROME_EXECUTABLE_PATH || await chromium.executablePath || '/usr/bin/google-chrome',
+      executablePath: "/usr/bin/google-chrome",
       headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+      ],
     });
 
     const page = await browser.newPage();
     await page.goto("https://www.hlgamingofficial.com", { waitUntil: "networkidle2" });
 
     console.log("Waiting for reCAPTCHA solve...");
-
-    await page.waitForTimeout(30000); // Allow time for manual solve if testing locally
+    await page.waitForTimeout(30000); 
 
     const token = await page.evaluate(() => {
       return typeof grecaptcha !== "undefined" ? grecaptcha.getResponse() : null;
@@ -54,7 +56,6 @@ app.get("/account-info", async (req, res) => {
     };
 
     const apiResponse = await axios.post(apiUrl, data, { headers });
-
     await browser.close();
 
     return res.json({ apiResponse: apiResponse.data });

@@ -7,7 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 app.get("/", (req, res) => {
-  res.send("HL Gaming Puppeteer API Running on Koyeb!");
+  res.send("Puppeteer API Running on Koyeb");
 });
 
 app.get("/account-info", async (req, res) => {
@@ -15,8 +15,8 @@ app.get("/account-info", async (req, res) => {
     const browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath,
-      headless: chromium.headless,
+      executablePath: process.env.CHROME_EXECUTABLE_PATH || await chromium.executablePath || '/usr/bin/google-chrome',
+      headless: true,
     });
 
     const page = await browser.newPage();
@@ -24,7 +24,7 @@ app.get("/account-info", async (req, res) => {
 
     console.log("Waiting for reCAPTCHA solve...");
 
-    await page.waitForTimeout(30000); // 30 seconds to solve reCAPTCHA manually
+    await page.waitForTimeout(30000); // Allow time for manual solve if testing locally
 
     const token = await page.evaluate(() => {
       return typeof grecaptcha !== "undefined" ? grecaptcha.getResponse() : null;
@@ -37,7 +37,7 @@ app.get("/account-info", async (req, res) => {
 
     console.log("Token:", token);
 
-    const url = "https://client-hlgamingofficial.vercel.app/api/ff-hl-gaming-official-api-account-v2-latest/account";
+    const apiUrl = "https://client-hlgamingofficial.vercel.app/api/ff-hl-gaming-official-api-account-v2-latest/account";
 
     const data = {
       key: "FFwlx",
@@ -53,7 +53,7 @@ app.get("/account-info", async (req, res) => {
       "x-recaptcha-token": token,
     };
 
-    const apiResponse = await axios.post(url, data, { headers });
+    const apiResponse = await axios.post(apiUrl, data, { headers });
 
     await browser.close();
 

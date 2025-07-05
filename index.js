@@ -1,43 +1,43 @@
 const express = require("express");
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-core");
+const chromium = require("chrome-aws-lambda");
 const axios = require("axios");
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
 app.get("/", (req, res) => {
-  res.send("HL Gaming Puppeteer API Running!");
+  res.send("HL Gaming Puppeteer API Running on Koyeb!");
 });
 
 app.get("/account-info", async (req, res) => {
   try {
     const browser = await puppeteer.launch({
-      headless: false,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath,
+      headless: chromium.headless,
     });
 
     const page = await browser.newPage();
     await page.goto("https://www.hlgamingofficial.com", { waitUntil: "networkidle2" });
 
-    console.log("🛑 Please solve the reCAPTCHA manually in the opened browser...");
+    console.log("Waiting for reCAPTCHA solve...");
 
     await page.waitForTimeout(30000); // 30 seconds to solve reCAPTCHA manually
 
     const token = await page.evaluate(() => {
-      if (typeof grecaptcha !== "undefined") {
-        return grecaptcha.getResponse();
-      }
-      return null;
+      return typeof grecaptcha !== "undefined" ? grecaptcha.getResponse() : null;
     });
 
     if (!token) {
       await browser.close();
-      return res.status(400).json({ error: "reCAPTCHA token not found!" });
+      return res.status(400).json({ error: "reCAPTCHA token not found" });
     }
 
-    console.log("✅ reCAPTCHA Token Collected:", token);
+    console.log("Token:", token);
 
-    const apiUrl = "https://client-hlgamingofficial.vercel.app/api/ff-hl-gaming-official-api-account-v2-latest/account";
+    const url = "https://client-hlgamingofficial.vercel.app/api/ff-hl-gaming-official-api-account-v2-latest/account";
 
     const data = {
       key: "FFwlx",
@@ -53,14 +53,14 @@ app.get("/account-info", async (req, res) => {
       "x-recaptcha-token": token,
     };
 
-    const response = await axios.post(apiUrl, data, { headers });
+    const apiResponse = await axios.post(url, data, { headers });
 
     await browser.close();
-    return res.json({ apiResponse: response.data });
 
+    return res.json({ apiResponse: apiResponse.data });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 

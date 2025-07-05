@@ -1,43 +1,48 @@
-const express = require('express');
-const puppeteer = require('puppeteer-core');
-const chromium = require('chrome-aws-lambda');
-const axios = require('axios');
+const express = require("express");
+const puppeteer = require("puppeteer");
+const axios = require("axios");
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-app.get('/account-info', async (req, res) => {
+app.get("/", (req, res) => {
+  res.send("HL Gaming Puppeteer API Running!");
+});
+
+app.get("/account-info", async (req, res) => {
   try {
     const browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath,
-      headless: chromium.headless,
+      headless: false,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
 
     const page = await browser.newPage();
-    await page.goto('https://www.hlgamingofficial.com', { waitUntil: 'networkidle2' });
+    await page.goto("https://www.hlgamingofficial.com", { waitUntil: "networkidle2" });
 
-    console.log('Waiting for reCAPTCHA solve...');
-    await page.waitForTimeout(30000); // 30 seconds to manually solve or auto if possible
+    console.log("🛑 Please solve the reCAPTCHA manually in the opened browser...");
+
+    await page.waitForTimeout(30000); // 30 seconds to solve reCAPTCHA manually
 
     const token = await page.evaluate(() => {
-      return (typeof grecaptcha !== 'undefined') ? grecaptcha.getResponse() : null;
+      if (typeof grecaptcha !== "undefined") {
+        return grecaptcha.getResponse();
+      }
+      return null;
     });
 
     if (!token) {
       await browser.close();
-      return res.status(400).json({ error: 'reCAPTCHA token not found' });
+      return res.status(400).json({ error: "reCAPTCHA token not found!" });
     }
 
-    console.log('Token:', token);
+    console.log("✅ reCAPTCHA Token Collected:", token);
 
-    const url = "https://client-hlgamingofficial.vercel.app/api/ff-hl-gaming-official-api-account-v2-latest/account";
+    const apiUrl = "https://client-hlgamingofficial.vercel.app/api/ff-hl-gaming-official-api-account-v2-latest/account";
 
     const data = {
       key: "FFwlx",
       region: "sg",
-      uid: "12345678"
+      uid: "12345678",
     };
 
     const headers = {
@@ -45,25 +50,20 @@ app.get('/account-info', async (req, res) => {
       "Content-Type": "application/json",
       "Origin": "https://www.hlgamingofficial.com",
       "Referer": "https://www.hlgamingofficial.com/",
-      "x-recaptcha-token": token
+      "x-recaptcha-token": token,
     };
 
-    const apiRes = await axios.post(url, data, { headers });
+    const response = await axios.post(apiUrl, data, { headers });
 
     await browser.close();
-
-    res.json({ apiResponse: apiRes.data });
+    return res.json({ apiResponse: response.data });
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
-app.get('/', (req, res) => {
-  res.send('Puppeteer API Running');
-});
-
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });

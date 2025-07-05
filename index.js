@@ -13,7 +13,7 @@ app.get("/account-info", async (req, res) => {
   try {
     const browser = await puppeteer.launch({
       executablePath: "/usr/bin/google-chrome",
-      headless: true,
+      headless: false,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",

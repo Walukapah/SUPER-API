@@ -1,6 +1,6 @@
 FROM node:18-slim
 
-# Install Chrome
+# Install Chrome dependencies
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -22,12 +22,15 @@ RUN apt-get update && apt-get install -y \
     xdg-utils \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Chrome
 RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
     apt install -y ./google-chrome-stable_current_amd64.deb && \
     rm google-chrome-stable_current_amd64.deb
 
 WORKDIR /app
-COPY package.json package-lock.json ./
+
+# Only copying package.json (lock file skip if missing)
+COPY package.json ./
 RUN npm install
 
 COPY . .

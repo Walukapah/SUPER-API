@@ -1,20 +1,23 @@
 FROM node:18-alpine
 
-# Install system dependencies including git
 RUN apk add --no-cache \
-    python3 \
-    make \
-    g++ \
-    cairo-dev \
-    jpeg-dev \
-    pango-dev \
-    giflib-dev \
-    git
+  python3 \
+  make \
+  g++ \
+  cairo-dev \
+  jpeg-dev \
+  pango-dev \
+  giflib-dev \
+  git
 
 WORKDIR /app
+
 COPY package*.json ./
-RUN npm install
+
+RUN npm install --legacy-peer-deps
+
 COPY . .
 
-EXPOSE 8000
+EXPOSE 8080
+
 CMD ["npm", "start"]
